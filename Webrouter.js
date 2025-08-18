@@ -32,4 +32,12 @@ router.use("/footer", footerRoute);
 const pageRoute = require("./Route/v1/pageRoute");
 router.use("/page", pageRoute);
 
+//  location (division/district/upazila)
+const locationRoute = require("./Route/v1/locaitonRoute");
+router.use("/location", locationRoute);
+
+//  categories list for web
+const categoryWebRoute = require("./Route/v1/categoryWebRoute");
+router.use("/categories", categoryWebRoute);
+
 module.exports = router;

@@ -639,6 +639,81 @@ const getPopulerNewsWeb = async (req, res) => {
   }
 };
 
+// Archive filtering endpoint
+async function getArchiveWeb(req, res) {
+  try {
+    const {
+      from,
+      to,
+      categorySlug,
+      categoryId,
+      divisionId,
+      districtId,
+      upazilaId,
+      q,
+      page = 1,
+      limit = 12,
+    } = req.query;
+
+    const numericLimit = Math.min(parseInt(limit) || 12, 60);
+    const numericPage = Math.max(parseInt(page) || 1, 1);
+    const skip = (numericPage - 1) * numericLimit;
+
+    const match = { status: "active" };
+
+    // Date range by createdAt/publishDate
+    if (from || to) {
+      match.createdAt = {};
+      if (from) match.createdAt.$gte = new Date(from);
+      if (to) match.createdAt.$lte = new Date(to);
+    }
+
+    // Category filter (by slug or id)
+    if (categoryId) {
+      match.categoryList = categoryId;
+    } else if (categorySlug) {
+      const cat = await Category.findOne({ categorySlug }).select("_id");
+      if (cat?._id) match.categoryList = cat._id;
+    }
+
+    // Location filters
+    if (divisionId) match.division = divisionId;
+    if (districtId) match.district = districtId;
+    if (upazilaId) match.upazila = upazilaId;
+
+    // Basic text search on title/subTitle/description
+    if (q && typeof q === "string" && q.trim() !== "") {
+      const regex = new RegExp(q.trim(), "i");
+      match.$or = [
+        { title: regex },
+        { subTitle: regex },
+        { discription: regex },
+      ];
+    }
+
+    const [items, total] = await Promise.all([
+      News.find(match)
+        .sort({ createdAt: -1, _id: -1 })
+        .skip(skip)
+        .limit(numericLimit)
+        .select("postId title image createdAt categoryList division district upazila")
+        .populate("categoryList", "name categorySlug")
+        .lean(),
+      News.countDocuments(match),
+    ]);
+
+    return res.status(200).json({
+      page: numericPage,
+      limit: numericLimit,
+      total,
+      items,
+    });
+  } catch (error) {
+    console.error("getArchiveWeb error:", error);
+    return res.status(500).json({ message: "Something went wrong" });
+  }
+}
+
 module.exports = {
   getTopNewsWeb,
   createPost,
@@ -655,4 +730,5 @@ module.exports = {
   geSingleVideoNewsWeb,
   getPopularPosts,
   getPopulerNewsWeb,
+  getArchiveWeb,
 };

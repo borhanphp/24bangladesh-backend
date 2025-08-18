@@ -20,6 +20,7 @@ const {
   getTopNewsWeb,
   getPopularPosts,
   getPopulerNewsWeb,
+  getArchiveWeb,
 } = require("../../Controller/v1/postController");
 
 // import middleware
@@ -59,6 +60,7 @@ route.get("/videoNews", geVideoNewsWeb);
 route.get("/video/:id", geSingleVideoNewsWeb);
 route.get("/popularPost", getPopularPosts);
 route.get("/popularNews", getPopulerNewsWeb);
+route.get("/archive", getArchiveWeb);
 
 // export
 module.exports = route;
